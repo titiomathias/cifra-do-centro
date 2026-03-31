@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cifra Bagulhês — spec v1.2</title>
+<style>
+  :root {
+    --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --font-mono: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+    --color-text-primary: #1a1a1a;
+    --color-text-secondary: #555;
+    --color-background-secondary: #f7f7f7;
+    --color-background-tertiary: #efefef;
+    --color-border-tertiary: #e0e0e0;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --color-text-primary: #e8e8e8;
+      --color-text-secondary: #aaa;
+      --color-background-secondary: #1e1e1e;
+      --color-background-tertiary: #252525;
+      --color-border-tertiary: #333;
+    }
+  }
+  body { margin: 0; background: transparent; }
+  .spec { padding: 1.5rem 1rem; font-family: var(--font-sans); color: var(--color-text-primary); max-width: 720px; }
+  h2 { font-size: 18px; font-weight: 500; margin: 0 0 0.5rem; }
+  h3 { font-size: 15px; font-weight: 500; margin: 1.5rem 0 0.5rem; color: var(--color-text-primary); }
+  p, li { font-size: 14px; line-height: 1.7; color: var(--color-text-secondary); }
+  .tag { display: inline-block; font-size: 12px; font-weight: 500; padding: 2px 8px; border-radius: 99px; margin-right: 6px; }
+  .tag-op  { background: #EEEDFE; color: #3C3489; }
+  .tag-val { background: #E1F5EE; color: #085041; }
+  .tag-mod { background: #FAEEDA; color: #633806; }
+  .tag-sep { background: #FAECE7; color: #4A1B0C; }
+  .tag-new { background: #FEF3C7; color: #92400E; font-size: 10px; padding: 1px 6px; vertical-align: middle; }
+  .tag-chg { background: #DBEAFE; color: #1E40AF; font-size: 10px; padding: 1px 6px; vertical-align: middle; }
+  .tag-rem { background: #FEE2E2; color: #991B1B; font-size: 10px; padding: 1px 6px; vertical-align: middle; }
+  @media (prefers-color-scheme: dark) {
+    .tag-op  { background: #3C3489; color: #CECBF6; }
+    .tag-val { background: #085041; color: #9FE1CB; }
+    .tag-mod { background: #633806; color: #FAC775; }
+    .tag-sep { background: #4A1B0C; color: #F5C4B3; }
+    .tag-new { background: #78350F; color: #FDE68A; }
+    .tag-chg { background: #1E3A5F; color: #93C5FD; }
+    .tag-rem { background: #7F1D1D; color: #FCA5A5; }
+  }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 0.5rem; }
+  th { text-align: left; font-weight: 500; font-size: 12px; color: var(--color-text-secondary); padding: 6px 8px; border-bottom: 1px solid var(--color-border-tertiary); }
+  td { padding: 5px 8px; color: var(--color-text-secondary); border-bottom: 1px solid var(--color-border-tertiary); font-family: var(--font-mono); font-size: 12px; vertical-align: top; }
+  td.w { font-family: var(--font-sans); }
+  tr:last-child td { border-bottom: none; }
+  .card { border: 1px solid var(--color-border-tertiary); border-radius: 10px; padding: 1rem 1.25rem; margin: 0.75rem 0; background: var(--color-background-secondary); }
+  .example { font-family: var(--font-mono); font-size: 13px; background: var(--color-background-tertiary); padding: 10px 14px; border-radius: 8px; margin: 0.5rem 0; color: var(--color-text-primary); line-height: 1.8; white-space: pre-wrap; }
+  .rule { display: flex; gap: 10px; margin: 0.4rem 0; font-size: 13px; }
+  .rule-num { font-weight: 500; min-width: 18px; color: var(--color-text-primary); }
+  .divider { border: none; border-top: 1px solid var(--color-border-tertiary); margin: 1.25rem 0; }
+  .change-note { font-size: 12px; color: var(--color-text-secondary); font-style: italic; margin: 0.25rem 0 0; }
+  .section-label { font-weight: 400; color: var(--color-text-secondary); font-size: 13px; }
+  .accent-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 4px 12px; margin: 0.5rem 0; font-size: 12px; font-family: var(--font-mono); }
+  .accent-item { display: flex; justify-content: space-between; padding: 2px 0; color: var(--color-text-secondary); }
+  .accent-char { font-size: 14px; color: var(--color-text-primary); }
+</style>
+</head>
+<body>
+<div class="spec">
+  <h2>Cifra Bagulhês — especificação v1.2</h2>
+  <p>Uma linguagem cifrada em português coloquial onde sequências de palavras genéricas codificam valores Unicode (Latin-1) via expressões aritméticas. Suporte completo a caracteres acentuados do português brasileiro.</p>
+
+  <hr class="divider">
+  <h3>Tipos de token <span class="section-label">— cada palavra tem um papel</span></h3>
+
+  <div style="display:flex;flex-wrap:wrap;gap:8px;margin:0.5rem 0 1rem;">
+    <span><span class="tag tag-val">valor</span><span style="font-size:13px">número fixo na tabela</span></span>
+    <span><span class="tag tag-op">operador</span><span style="font-size:13px">conectivo aritmético</span></span>
+    <span><span class="tag tag-mod">modificador</span><span style="font-size:13px">escala o valor</span></span>
+    <span><span class="tag tag-sep">separador</span><span style="font-size:13px">delimita caracteres</span></span>
+  </div>
+
+  <hr class="divider">
+  <h3>Tabela de palavras-raiz</h3>
+  <p style="font-size:12px;margin-bottom:0.25rem;color:var(--color-text-secondary)">21 palavras-valor — primos, potências de 2, e constantes úteis.</p>
+
+  <table>
+    <tr><th>Palavra</th><th>Tipo</th><th>Valor</th><th>Motivo mnemônico</th></tr>
+    <tr><td class="w">coisinha</td><td><span class="tag tag-val">valor</span></td><td>1</td><td class="w">diminutivo de coisa — mínimo</td></tr>
+    <tr><td class="w">coisa</td><td><span class="tag tag-val">valor</span></td><td>2</td><td class="w">neutro, genérico — base par</td></tr>
+    <tr><td class="w">coiso</td><td><span class="tag tag-val">valor</span></td><td>3</td><td class="w">variante masc. — base ímpar</td></tr>
+    <tr><td class="w">trem</td><td><span class="tag tag-val">valor</span></td><td>5</td><td class="w">coisa grossa, pesada — 5</td></tr>
+    <tr><td class="w">negócio</td><td><span class="tag tag-val">valor</span></td><td>7</td><td class="w">importante, primo</td></tr>
+    <tr><td class="w">bagulho</td><td><span class="tag tag-val">valor</span></td><td>11</td><td class="w">bagulho é especial — primo</td></tr>
+    <tr><td class="w">troço</td><td><span class="tag tag-val">valor</span></td><td>13</td><td class="w">troço misterioso — primo</td></tr>
+    <tr><td class="w">parada</td><td><span class="tag tag-val">valor</span></td><td>16</td><td class="w">parada é grande — 2⁴</td></tr>
+    <tr><td class="w">treco</td><td><span class="tag tag-val">valor</span></td><td>17</td><td class="w">quase troço, mas diferente — primo <span class="tag tag-new">novo v1.2</span></td></tr>
+    <tr><td class="w">trequinho</td><td><span class="tag tag-val">valor</span></td><td>19</td><td class="w">diminutivo de treco — primo <span class="tag tag-new">novo v1.2</span></td></tr>
+    <tr><td class="w">coisada</td><td><span class="tag tag-val">valor</span></td><td>23</td><td class="w">coletivo de coisa — primo <span class="tag tag-new">novo v1.2</span></td></tr>
+    <tr><td class="w">coisado</td><td><span class="tag tag-val">valor</span></td><td>29</td><td class="w">variante masc. de coisada — primo <span class="tag tag-new">novo v1.2</span></td></tr>
+    <tr><td class="w">birosca</td><td><span class="tag tag-val">valor</span></td><td>32</td><td class="w">espaço ASCII (32) — começa tudo, 2⁵</td></tr>
+    <tr><td class="w">fazida</td><td><span class="tag tag-val">valor</span></td><td>37</td><td class="w">coisa feita — primo <span class="tag tag-new">novo v1.2</span></td></tr>
+    <tr><td class="w">fazido</td><td><span class="tag tag-val">valor</span></td><td>41</td><td class="w">variante masc. de fazida — primo <span class="tag tag-new">novo v1.2</span></td></tr>
+    <tr><td class="w">da</td><td><span class="tag tag-val">valor</span></td><td>43</td><td class="w">preposição curta — primo <span class="tag tag-new">novo v1.2</span></td></tr>
+    <tr><td class="w">do</td><td><span class="tag tag-val">valor</span></td><td>47</td><td class="w">preposição curta — primo <span class="tag tag-new">novo v1.2</span></td></tr>
+    <tr><td class="w">de</td><td><span class="tag tag-val">valor</span></td><td>53</td><td class="w">preposição curta — primo <span class="tag tag-new">novo v1.2</span></td></tr>
+    <tr><td class="w">zica</td><td><span class="tag tag-val">valor</span></td><td>64</td><td class="w">o zica — 2⁶</td></tr>
+    <tr><td class="w">problema</td><td><span class="tag tag-val">valor</span></td><td>128</td><td class="w">problema grande pesa 128 — 2⁷, âncora dos acentos <span class="tag tag-new">novo v1.2</span></td></tr>
+    <tr><td class="w">fulero</td><td><span class="tag tag-val">valor</span></td><td>−1</td><td class="w">subtrai 1 — é ruim</td></tr>
+  </table>
+
+  <h3 style="margin-top:1.25rem">Modificadores de escala</h3>
+  <table>
+    <tr><th>Palavra</th><th>Tipo</th><th>Efeito</th><th></th></tr>
+    <tr><td class="w">meio</td><td><span class="tag tag-mod">modificador</span></td><td>próximo valor ÷ 2 (arredonda p/ baixo)</td><td></td></tr>
+    <tr><td class="w">ué</td><td><span class="tag tag-mod">modificador</span></td><td>próximo valor × 2</td><td class="w"><span class="tag tag-chg">era "dobro"</span></td></tr>
+    <tr><td class="w">mó</td><td><span class="tag tag-mod">modificador</span></td><td>próximo valor × 3</td><td class="w"><span class="tag tag-chg">era "triplo"</span></td></tr>
+    <tr><td class="w">um monte</td><td><span class="tag tag-mod">modificador</span></td><td>próximo valor × 10</td><td></td></tr>
+  </table>
+  <p class="change-note">⚠ <code>dobro</code> e <code>triplo</code> foram removidos — use <code>ué</code> (×2) e <code>mó</code> (×3). Ambas soam como gírias/interjeições naturais em contexto.</p>
+
+  <h3 style="margin-top:1.25rem">Operadores (conectivos)</h3>
+  <table>
+    <tr><th>Palavra</th><th>Tipo</th><th>Operação</th><th>Precedência</th></tr>
+    <tr><td class="w">e</td><td><span class="tag tag-op">operador</span></td><td>+  adição</td><td>1 (baixa)</td></tr>
+    <tr><td class="w">a</td><td><span class="tag tag-op">operador</span></td><td>−  subtração</td><td>1 (baixa)</td></tr>
+    <tr><td class="w">o</td><td><span class="tag tag-op">operador</span></td><td>×  multiplicação</td><td>2 (alta)</td></tr>
+  </table>
+
+  <h3 style="margin-top:1.25rem">Separadores</h3>
+  <table>
+    <tr><th>Palavra / sequência</th><th>Função</th></tr>
+    <tr><td class="w">aí</td><td class="w">separa dois caracteres consecutivos</td></tr>
+    <tr><td class="w">daí</td><td class="w">caractere espaço (U+0020) — <strong>única</strong> forma de codificar espaço</td></tr>
+    <tr><td class="w">vixe</td><td class="w">próximo caractere é maiúsculo (subtrai 32 do code point)</td></tr>
+    <tr><td class="w">né</td><td class="w">fim de frase / fim do texto cifrado</td></tr>
+  </table>
+  <p class="change-note">⚠ <code>birosca</code> (32) e <code>problema</code> (128) nunca codificam espaço — use sempre <code>daí</code>. Ambas só aparecem em expressões aritméticas.</p>
+
+  <hr class="divider">
+  <h3>Faixa de caracteres suportados <span class="tag tag-new">novo v1.2</span></h3>
+  <p>A cifra cobre <strong>code points 33–252</strong> (ASCII imprimível + Latin-1 estendido). Isso inclui todos os caracteres acentuados e símbolos do português brasileiro.</p>
+
+  <h3 style="margin-top:1rem;font-size:14px;">Caracteres acentuados pt-BR e seus code points</h3>
+  <div class="accent-grid">
+    <div class="accent-item"><span class="accent-char">à</span> 224</div>
+    <div class="accent-item"><span class="accent-char">á</span> 225</div>
+    <div class="accent-item"><span class="accent-char">â</span> 226</div>
+    <div class="accent-item"><span class="accent-char">ã</span> 227</div>
+    <div class="accent-item"><span class="accent-char">ç</span> 231</div>
+    <div class="accent-item"><span class="accent-char">é</span> 233</div>
+    <div class="accent-item"><span class="accent-char">ê</span> 234</div>
+    <div class="accent-item"><span class="accent-char">í</span> 237</div>
+    <div class="accent-item"><span class="accent-char">ó</span> 243</div>
+    <div class="accent-item"><span class="accent-char">ô</span> 244</div>
+    <div class="accent-item"><span class="accent-char">õ</span> 245</div>
+    <div class="accent-item"><span class="accent-char">ú</span> 250</div>
+    <div class="accent-item"><span class="accent-char">ü</span> 252</div>
+    <div class="accent-item"><span class="accent-char">ª</span> 170</div>
+    <div class="accent-item"><span class="accent-char">º</span> 186</div>
+  </div>
+  <p style="font-size:12px;margin-top:0.5rem;">Para maiúsculas acentuadas (À, Á, Â, Ã, Ç, É, Ê, Í, Ó, Ô, Õ, Ú, Ü), use <code>vixe</code>: a diferença entre minúscula e maiúscula acentuada é sempre 32, igual ao ASCII padrão.</p>
+
+  <hr class="divider">
+  <h3>Regras de avaliação</h3>
+
+  <div class="rule"><span class="rule-num">1.</span><span>Uma expressão vai de um separador ao próximo. Avalie com precedência: <code>o</code> antes de <code>e</code> / <code>a</code>.</span></div>
+  <div class="rule"><span class="rule-num">2.</span><span>Modificadores (<code>ué</code>, <code>mó</code>, <code>meio</code>, <code>um monte</code>) se aplicam apenas ao <strong>próximo token de valor</strong>, não à expressão inteira.</span></div>
+  <div class="rule"><span class="rule-num">3.</span><span>O resultado da expressão é o code point Unicode do caractere (faixa alvo: 33–252).</span></div>
+  <div class="rule"><span class="rule-num">4.</span><span><code>vixe</code> antecede o separador do caractere e faz <strong>code point − 32</strong>. A expressão deve codificar a versão <em>minúscula</em> da letra; <code>vixe</code> converte para maiúscula. Ex: expressão = 97 ('a'), com <code>vixe</code> → 97 − 32 = 65 → 'A'. <span class="tag tag-chg">clarificado v1.2</span></span></div>
+  <div class="rule"><span class="rule-num">5.</span><span>Sem <code>vixe</code>, todo caractere é minúsculo (ou símbolo/acento minúsculo, se não for letra básica).</span></div>
+  <div class="rule"><span class="rule-num">6.</span><span>Se o caractere resultante não for letra (após aplicar −32), <code>vixe</code> é silenciosamente ignorado — sem erro.</span></div>
+  <div class="rule"><span class="rule-num">7.</span><span><code>vixe</code> funciona tanto para letras básicas (a–z) quanto para letras acentuadas (à–ü). Em ambos os casos, a diferença maiúsc/minúsc é 32. <span class="tag tag-new">novo v1.2</span></span></div>
+
+  <p style="font-size:12px;margin-top:0.75rem;color:var(--color-text-secondary)">
+    <strong style="color:var(--color-text-primary)">Nota sobre múltiplas codificações:</strong>
+    vários caminhos aritméticos podem produzir o mesmo code point — isso é intencional. Não há codificação canônica única; qualquer expressão válida que resulte no valor correto é aceita.
+  </p>
+
+  <hr class="divider">
+  <h3>Exemplos de codificação</h3>
+
+  <div class="card">
+    <p style="margin:0 0 4px;font-size:12px;color:var(--color-text-secondary)">Caractere: <strong style="color:var(--color-text-primary)">A</strong> — code point 65</p>
+    <div class="example">vixe zica e coiso o bagulho e coisa aí
+= maiúsc( 64 + 3×11 + 2 ) = maiúsc(99) → 99−32 = 67? 
+✗ Errado! Lembre: vixe exige a minúscula.
+
+vixe zica e coiso e birosca aí
+= maiúsc( 64 + 3 + 32 ) = maiúsc(99)? ✗ Não, 'a' = 97.
+
+vixe ué birosca e coiso e birosca aí
+= maiúsc( 32×2 + 3 + 32 ) = maiúsc(99)? ✗
+
+Correto:
+vixe zica e birosca e coisinha aí
+= maiúsc( 64 + 32 + 1 ) = maiúsc(97) → 97−32 = 65 → 'A' ✓</div>
+  </div>
+
+  <div class="card">
+    <p style="margin:0 0 4px;font-size:12px;color:var(--color-text-secondary)">Caractere: <strong style="color:var(--color-text-primary)">a</strong> — code point 97</p>
+    <div class="example">zica e birosca e coisinha aí
+= 64 + 32 + 1 = 97 → 'a'</div>
+  </div>
+
+  <div class="card">
+    <p style="margin:0 0 4px;font-size:12px;color:var(--color-text-secondary)">Caractere: <strong style="color:var(--color-text-primary)">!</strong> — code point 33</p>
+    <div class="example">birosca e coisinha aí
+= 32 + 1 = 33 → '!'</div>
+  </div>
+
+  <div class="card">
+    <p style="margin:0 0 4px;font-size:12px;color:var(--color-text-secondary)">Caractere: <strong style="color:var(--color-text-primary)">ã</strong> — code point 227 <span class="tag tag-new">novo v1.2</span></p>
+    <div class="example">problema e zica e coiso e birosca aí
+= 128 + 64 + 3 + 32 = 227 → 'ã'</div>
+  </div>
+
+  <div class="card">
+    <p style="margin:0 0 4px;font-size:12px;color:var(--color-text-secondary)">Caractere: <strong style="color:var(--color-text-primary)">Ã</strong> — code point 195 <span class="tag tag-new">novo v1.2</span></p>
+    <div class="example">vixe problema e zica e coiso e birosca aí
+= maiúsc( 128 + 64 + 3 + 32 ) = maiúsc(227) → 227−32 = 195 → 'Ã'</div>
+  </div>
+
+  <div class="card">
+    <p style="margin:0 0 4px;font-size:12px;color:var(--color-text-secondary)">Caractere: <strong style="color:var(--color-text-primary)">ç</strong> — code point 231 <span class="tag tag-new">novo v1.2</span></p>
+    <div class="example">problema e zica e coisa e fazida aí
+= 128 + 64 + 2 + 37 = 231 → 'ç'</div>
+  </div>
+
+  <div class="card">
+    <p style="margin:0 0 4px;font-size:12px;color:var(--color-text-secondary)">Caractere: <strong style="color:var(--color-text-primary)">é</strong> — code point 233 <span class="tag tag-new">novo v1.2</span></p>
+    <div class="example">problema e zica e fazido aí
+= 128 + 64 + 41 = 233 → 'é'</div>
+  </div>
+
+  <div class="card">
+    <p style="margin:0 0 4px;font-size:12px;color:var(--color-text-secondary)">Frase: <strong style="color:var(--color-text-primary)">"Oi!"</strong></p>
+    <div class="example">vixe ué birosca e ué negócio e coiso aí     ← 'O' (maiúsc de 111)
+  = maiúsc( 32×2 + 7×2 + 3 ) = maiúsc(81)?
+  ✗ Não! 64+14+3 = 81 ≠ 111
+
+Correto:
+vixe zica e da aí                              ← 'O' (maiúsc de 111)
+  = maiúsc( 64 + 47 ) = maiúsc(111) → 111−32 = 79 → 'O' ✓
+zica e fazido aí                                ← 'i' (105)
+  = 64 + 41 = 105 → 'i' ✓
+birosca e coisinha né                           ← '!' (33)
+  = 32 + 1 = 33 → '!' ✓</div>
+  </div>
+
+  <div class="card">
+    <p style="margin:0 0 4px;font-size:12px;color:var(--color-text-secondary)">Frase: <strong style="color:var(--color-text-primary)">"São"</strong> <span class="tag tag-new">novo v1.2</span></p>
+    <div class="example">vixe zica e birosca e trem e coisa e birosca aí  ← 'S' (maiúsc de 115)
+  = maiúsc( 64+32+5+2+32 ) = maiúsc(135)?
+  ✗ Não! 135 ≠ 115
+
+Correto:
+vixe zica e de a coisa aí                         ← 'S' (maiúsc de 115)
+  = maiúsc( 64 + 53 − 2 ) = maiúsc(115) → 115−32 = 83 → 'S' ✓
+zica e birosca e coisinha aí                       ← 'a' (97)
+  = 64 + 32 + 1 = 97 → 'a' ✓
+problema e zica e coiso e birosca né               ← 'ã' (227)
+  = 128 + 64 + 3 + 32 = 227 → 'ã' ✓</div>
+  </div>
+
+  <hr class="divider">
+  <h3>Resumo rápido (referência)</h3>
+  <div class="example">── valores (21 palavras) ────────────────────
+coisinha=1   coisa=2      coiso=3      trem=5
+negócio=7    bagulho=11   troço=13     parada=16
+treco=17     trequinho=19 coisada=23   coisado=29
+birosca=32   fazida=37    fazido=41    da=43
+do=47        de=53        zica=64      problema=128
+fulero=−1
+
+── modificadores ────────────────────────────
+meio=÷2   ué=×2   mó=×3   um monte=×10
+
+── operadores ───────────────────────────────
+e=+   a=−   o=×   (prec: o > e/a)
+
+── separadores ──────────────────────────────
+aí   → próximo char
+daí  → espaço (único encoding de espaço)
+vixe → maiúscula (code point − 32)
+né   → fim do texto
+
+── faixa ────────────────────────────────────
+code points 33–252 (ASCII + Latin-1 pt-BR)</div>
+
+  <hr class="divider">
+  <h3>Mapa de acentos pt-BR — expressões de referência <span class="tag tag-new">novo v1.2</span></h3>
+  <p style="font-size:12px;margin-bottom:0.5rem;">Cada expressão abaixo codifica a versão minúscula. Para maiúscula, prefixe com <code>vixe</code>.</p>
+  <div class="example" style="font-size:12px;line-height:2;">à (224) = problema e zica e birosca
+á (225) = problema e zica e birosca e coisinha
+â (226) = problema e zica e birosca e coisa
+ã (227) = problema e zica e birosca e coiso
+ç (231) = problema e zica e coisa e fazida
+é (233) = problema e zica e fazido
+ê (234) = problema e zica e fazido e coisinha
+í (237) = problema e zica e coisa e da
+ó (243) = problema e zica e birosca e trequinho
+ô (244) = problema e zica e de a coisinha
+õ (245) = problema e zica e de
+ú (250) = problema e zica e trem e de
+ü (252) = problema e zica e negócio e de</div>
+
+  <hr class="divider">
+  <h3>Mudanças v1.1 → v1.2</h3>
+  <p class="change-note" style="margin-top:0">
+    <strong>Novos tokens de valor (10):</strong>
+    <code>treco=17</code>, <code>trequinho=19</code>, <code>coisada=23</code>, <code>coisado=29</code>,
+    <code>fazida=37</code>, <code>fazido=41</code>, <code>da=43</code>, <code>do=47</code>, <code>de=53</code>,
+    <code>problema=128</code>.<br><br>
+    <strong>Modificadores renomeados:</strong>
+    <code>dobro</code> → <code>ué</code> (×2);
+    <code>triplo</code> → <code>mó</code> (×3).<br><br>
+    <strong>Faixa expandida:</strong>
+    33–126 → 33–252 (inclui Latin-1 completo para pt-BR).<br><br>
+    <strong>Regra 4 clarificada:</strong>
+    <code>vixe</code> opera como "code point − 32" — funciona tanto para letras básicas quanto acentuadas (regra 7).<br><br>
+    <strong>Regra 7 adicionada:</strong>
+    documenta que <code>vixe</code> cobre letras acentuadas (à↔À, á↔Á, etc.), pois a diferença é sempre 32.
+  </p>
+</div>
+</body>
+</html>
