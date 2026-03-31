@@ -31,10 +31,10 @@ COPY cifra_app/cifra.py ./cifra.py
 COPY cifra_app/models/ ./models/
 COPY cifra_app/static/ ./static/
 
-RUN chown -R cifra:cifra /app
-
-RUN chmod -R 550 /app \
- && chmod -R 440 /app/static
+RUN chown -R cifra:cifra /app \
+ && find /app -type d -exec chmod 750 {} \; \
+ && find /app -type f -exec chmod 550 {} \; \
+ && find /app/static -type f -exec chmod 440 {} \;
 
 USER cifra
 
