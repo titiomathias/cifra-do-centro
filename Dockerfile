@@ -28,7 +28,8 @@ WORKDIR /app
 
 COPY cifra_app/main.py ./main.py
 COPY cifra_app/cifra.py ./cifra.py
-COPY cifra_static/ ./static/
+COPY cifra_app/models/ ./models/
+COPY cifra_app/static/ ./static/
 
 RUN chown -R cifra:cifra /app
 
