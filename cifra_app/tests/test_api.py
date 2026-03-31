@@ -120,6 +120,14 @@ class TestEncodeErrors:
         r = client.post("/encode", json={"text": None})
         assert r.status_code == 422
 
+    def test_texto_acima_do_limite_retorna_422(self):
+        r = client.post("/encode", json={"text": "a" * 10_001})
+        assert r.status_code == 422
+
+    def test_texto_no_limite_aceito(self):
+        r = client.post("/encode", json={"text": "a" * 10_000})
+        assert r.status_code == 200
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 # 4. POST /decode — respostas de sucesso
@@ -207,6 +215,10 @@ class TestDecodeErrors:
     def test_tokens_antigos_triplo_retorna_422(self):
         # triplo foi removido na v1.2
         assert post_decode("triplo birosca né").status_code == 422
+
+    def test_cifra_acima_do_limite_retorna_422(self):
+        r = client.post("/decode", json={"text": "x" * 500_001})
+        assert r.status_code == 422
 
 
 # ─────────────────────────────────────────────────────────────────────────────
