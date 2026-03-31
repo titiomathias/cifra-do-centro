@@ -25,7 +25,7 @@ jobs:
         run: pip install -r cifra_app/requirements.txt pytest httpx
 
       - name: Testes unitários
-        run: pytest cifra_app/test_cifra.py -v
+        run: pytest cifra_app/tests/test_cifra.py -v
 
       - name: Testes de integração da API
-        run: pytest cifra_app/test_api.py -v
+        run: pytest cifra_app/tests/test_api.py -v
