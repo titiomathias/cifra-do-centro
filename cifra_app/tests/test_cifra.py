@@ -1,7 +1,7 @@
 import pytest
 import sys, os
 
-sys.path.insert(0, os.path.dirname(__file__))
+sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 from cifra import encode, decode, _tokenize, _eval_expr, _encode_int, ASCII_MIN, ASCII_MAX
 
 
