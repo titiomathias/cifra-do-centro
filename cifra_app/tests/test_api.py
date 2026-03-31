@@ -68,7 +68,18 @@ class TestEncodeSuccess:
         data = post_encode("a b").json()
         assert "daí" in data["result"]
 
-    @pytest.mark.parametrize("text", ["a", "Z", "Oi!", "hello world", "1234"])
+    def test_acento_minusculo_sem_vixe(self):
+        data = post_encode("ã").json()
+        assert not data["result"].startswith("vixe")
+
+    def test_acento_maiusculo_gera_vixe(self):
+        data = post_encode("Ã").json()
+        assert data["result"].startswith("vixe")
+
+    @pytest.mark.parametrize("text", [
+        "a", "Z", "Oi!", "hello world", "1234",
+        "ão", "São", "café", "maçã", "ótimo",
+    ])
     def test_roundtrip_via_api(self, text):
         """Encode seguido de decode via API deve retornar o original."""
         cifra = post_encode(text).json()["result"]
@@ -89,11 +100,12 @@ class TestEncodeErrors:
         data = post_encode("").json()
         assert "detail" in data
 
-    def test_char_invalido_retorna_422(self):
-        assert post_encode("ç").status_code == 422
+    def test_char_invalido_acima_do_maximo_retorna_422(self):
+        # chr(253) = 'ý' — fora da faixa 33-252
+        assert post_encode(chr(253)).status_code == 422
 
     def test_char_invalido_menciona_faixa(self):
-        data = post_encode("ç").json()
+        data = post_encode(chr(253)).json()
         assert "faixa" in data["detail"]
 
     def test_body_sem_campo_text_retorna_422(self):
@@ -115,8 +127,8 @@ class TestEncodeErrors:
 
 class TestDecodeSuccess:
 
-    # cifra válida para "oi" gerada pelo encoder
-    CIFRA_OI = "triplo birosca e troço e coisa aí triplo birosca e negócio e coisa né"
+    # cifra válida para "oi": 'o'=111=zica e do; 'i'=105=zica e fazido
+    CIFRA_OI = "zica e do aí zica e fazido né"
 
     def test_status_200(self):
         assert post_decode(self.CIFRA_OI).status_code == 200
@@ -130,20 +142,39 @@ class TestDecodeSuccess:
         assert data["result"] == "oi"
 
     def test_aceita_cifra_sem_acento(self):
-        # separadores sem acento devem ser tolerados
-        cifra = "triplo birosca e coisinha ne"
+        # mó birosca e coisinha = 96+1 = 97 → 'a'
+        cifra = "mo birosca e coisinha ne"
         data = post_decode(cifra).json()
         assert data["result"] == "a"
 
     def test_aceita_cifra_em_maiusculas(self):
-        cifra = "TRIPLO BIROSCA E COISINHA NE"
+        cifra = "MO BIROSCA E COISINHA NE"
         data = post_decode(cifra).json()
         assert data["result"] == "a"
 
     def test_vixe_decodifica_maiuscula(self):
-        cifra = "vixe triplo birosca e coisinha né"
+        # vixe + 97 → 'A'
+        cifra = "vixe zica e birosca e coisinha né"
         data = post_decode(cifra).json()
         assert data["result"] == "A"
+
+    def test_decode_acento_a_til(self):
+        # ã = 227
+        cifra = "problema e zica e coiso e birosca né"
+        data = post_decode(cifra).json()
+        assert data["result"] == "ã"
+
+    def test_decode_vixe_acento(self):
+        # Ã = 195 = vixe + 227
+        cifra = "vixe problema e zica e coiso e birosca né"
+        data = post_decode(cifra).json()
+        assert data["result"] == "Ã"
+
+    def test_decode_frase_sao(self):
+        # S=vixe+(64+53-2=115)→83; ã=128+64+3+32=227; o=64+47=111
+        cifra = "vixe zica e de a coisa aí problema e zica e coiso e birosca aí zica e do né"
+        data = post_decode(cifra).json()
+        assert data["result"] == "São"
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -167,7 +198,15 @@ class TestDecodeErrors:
         assert post_decode("palavrainventada né").status_code == 422
 
     def test_modificador_sem_valor_retorna_422(self):
-        assert post_decode("dobro né").status_code == 422
+        assert post_decode("ue né").status_code == 422
+
+    def test_tokens_antigos_dobro_retorna_422(self):
+        # dobro foi removido na v1.2
+        assert post_decode("dobro birosca né").status_code == 422
+
+    def test_tokens_antigos_triplo_retorna_422(self):
+        # triplo foi removido na v1.2
+        assert post_decode("triplo birosca né").status_code == 422
 
 
 # ─────────────────────────────────────────────────────────────────────────────

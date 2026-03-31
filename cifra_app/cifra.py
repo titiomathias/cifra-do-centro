@@ -10,15 +10,22 @@ def _norm(s):
 _VALUES_RAW = {
     "coisinha": 1, "coisa": 2, "coiso": 3, "trem": 5,
     "negocio": 7, "bagulho": 11, "troco": 13, "parada": 16,
-    "birosca": 32, "zica": 64, "fulero": -1,
+    "treco": 17, "trequinho": 19, "coisada": 23, "coisado": 29,
+    "birosca": 32, "fazida": 37, "fazido": 41, "da": 43,
+    "do": 47, "de": 53, "zica": 64, "problema": 128,
+    "fulero": -1,
 }
-_MODIFIERS_RAW = {"meio": 0.5, "dobro": 2.0, "triplo": 3.0, "um monte": 10.0}
+_MODIFIERS_RAW = {"meio": 0.5, "ue": 2.0, "mo": 3.0, "um monte": 10.0}
 _OPERATORS = {"e": 1, "a": 1, "o": 2}
 
-ASCII_MIN, ASCII_MAX = 33, 126
+ASCII_MIN, ASCII_MAX = 33, 252
 
 # versoes com acento para output bonito
-_PRETTY = {"negocio": "neg\u00f3cio", "troco": "tro\u00e7o", "ne": "n\u00e9", "ai": "a\u00ed", "dai": "da\u00ed"}
+_PRETTY = {
+    "negocio": "negócio", "troco": "troço",
+    "ne": "né", "ai": "aí", "dai": "daí",
+    "ue": "ué", "mo": "mó",
+}
 
 
 def _tokenize(text):
@@ -60,7 +67,6 @@ def _eval_expr(tokens):
 
 
 def decode(cifra:str):
-    """Decodifica Cifra do Centro para texto legivel."""
     tokens = _tokenize(cifra)
     result = []
     buf = []
@@ -71,9 +77,12 @@ def decode(cifra:str):
             buf.clear(); next_upper[0] = False; return
         if not buf: return
         val = _eval_expr(list(buf)); buf.clear()
-        char = chr(val)
         if next_upper[0]:
-            char = char.upper() if char.isalpha() else char  # regra 6
+            upper_val = val - 32
+            # regra 6: se resultado nao for letra, vixe e ignorado silenciosamente
+            char = chr(upper_val) if 0 <= upper_val <= 0x10FFFF and chr(upper_val).isalpha() else chr(val)
+        else:
+            char = chr(val)
         next_upper[0] = False
         result.append(char)
 
@@ -95,8 +104,11 @@ def decode(cifra:str):
 
 
 _ATOMS = sorted([
-    ("dobro zica", 128), ("triplo birosca", 96), ("zica", 64),
-    ("birosca", 32), ("parada", 16), ("troco", 13), ("bagulho", 11),
+    ("mo zica", 192), ("problema", 128), ("mo birosca", 96),
+    ("zica", 64), ("de", 53), ("do", 47), ("da", 43),
+    ("fazido", 41), ("fazida", 37), ("birosca", 32),
+    ("coisado", 29), ("coisada", 23), ("trequinho", 19),
+    ("treco", 17), ("parada", 16), ("troco", 13), ("bagulho", 11),
     ("negocio", 7), ("trem", 5), ("coiso", 3), ("coisa", 2), ("coisinha", 1),
 ], key=lambda x: -x[1])
 
@@ -132,17 +144,16 @@ def _prettify(s):
 
 
 def encode(text:str):
-    """Codifica texto para Cifra do Centro. Suporta ASCII 32-126."""
     out = []
     last = len(text) - 1
     for i, ch in enumerate(text):
-        av = ord(ch)
+        cp = ord(ch)
         if ch == " ":
             out.append("dai"); continue
-        if av < ASCII_MIN or av > ASCII_MAX:
-            raise ValueError(f"'{ch}' (ASCII {av}) fora da faixa {ASCII_MIN}-{ASCII_MAX}")
+        if cp < ASCII_MIN or cp > ASCII_MAX:
+            raise ValueError(f"'{ch}' (code point {cp}) fora da faixa {ASCII_MIN}-{ASCII_MAX}")
         upper = ch.isupper() and ch.isalpha()
-        target = av + 32 if upper else av
+        target = cp + 32 if upper else cp
         sep = "ne" if i == last else "ai"
         out.append(f"{'vixe ' if upper else ''}{_encode_int(target)} {sep}")
     if out and out[-1] == "dai":
@@ -151,7 +162,7 @@ def encode(text:str):
 
 
 if __name__ == "__main__":
-    p = argparse.ArgumentParser(prog="cifra_do Centro", description="Cifra do Centro v1.1")
+    p = argparse.ArgumentParser(prog="cifra_do_centro", description="Cifra do Centro v1.2")
     p.add_argument("modo", choices=["encode", "decode"])
     p.add_argument("texto")
     a = p.parse_args()
