@@ -20,7 +20,7 @@
     <header>
       <div class="logo-row">
         <h1>Cifra do Centro</h1>
-        <span class="version">v1.2</span>
+        <span class="version">v1.3</span>
       </div>
       <p class="tagline">Uma linguagem cifrada em português coloquial.<br>Palavras genéricas codificam texto via aritmética ASCII.</p>
     </header>
@@ -35,7 +35,7 @@
         <span id="input-label">Texto original</span>
         <span class="char-count" id="char-count">0 chars</span>
       </div>
-      <textarea id="input" placeholder="Digite aqui..." oninput="onInput()" autocomplete="off" spellcheck="false"></textarea>
+      <textarea id="input" placeholder="Digite aqui..." oninput="onInput()" autocomplete="off" spellcheck="false" maxlength="500000"></textarea>
     </div>
 
     <button class="run-btn" id="run-btn" onclick="run()">
@@ -94,7 +94,7 @@
     </details>
 
     <footer>
-      Cifra do Centro v1.2 - AltDel
+      Cifra do Centro v1.3 - AltDel
     </footer>
   </div>
 

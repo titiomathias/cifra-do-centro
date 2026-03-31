@@ -2,7 +2,7 @@ from pathlib import Path
 from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
-from models.models import TextIn, TextOut
+from models.models import EncodeIn, DecodeIn, TextOut
 from cifra import encode, decode
 
 app = FastAPI(
@@ -23,7 +23,7 @@ def health():
 
 
 @app.post("/encode", response_model=TextOut)
-def api_encode(body: TextIn):
+def api_encode(body: EncodeIn):
     if not body.text:
         raise HTTPException(status_code=422, detail="Campo 'text' não pode ser vazio.")
     try:
@@ -33,7 +33,7 @@ def api_encode(body: TextIn):
 
 
 @app.post("/decode", response_model=TextOut)
-def api_decode(body: TextIn):
+def api_decode(body: DecodeIn):
     if not body.text:
         raise HTTPException(status_code=422, detail="Campo 'text' não pode ser vazio.")
     try:

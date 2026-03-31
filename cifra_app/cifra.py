@@ -162,7 +162,7 @@ def encode(text:str):
 
 
 if __name__ == "__main__":
-    p = argparse.ArgumentParser(prog="cifra_do_centro", description="Cifra do Centro v1.2")
+    p = argparse.ArgumentParser(prog="cifra_do_centro", description="Cifra do Centro v1.3")
     p.add_argument("modo", choices=["encode", "decode"])
     p.add_argument("texto")
     a = p.parse_args()
