@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cifra do Centro — spec v1.1</title>
+<style>
+  :root {
+    --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --font-mono: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+    --color-text-primary: #1a1a1a;
+    --color-text-secondary: #555;
+    --color-background-secondary: #f7f7f7;
+    --color-background-tertiary: #efefef;
+    --color-border-tertiary: #e0e0e0;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --color-text-primary: #e8e8e8;
+      --color-text-secondary: #aaa;
+      --color-background-secondary: #1e1e1e;
+      --color-background-tertiary: #252525;
+      --color-border-tertiary: #333;
+    }
+  }
+  body { margin: 0; background: transparent; }
+  .spec { padding: 1.5rem 1rem; font-family: var(--font-sans); color: var(--color-text-primary); max-width: 680px; }
+  h2 { font-size: 18px; font-weight: 500; margin: 0 0 0.5rem; }
+  h3 { font-size: 15px; font-weight: 500; margin: 1.5rem 0 0.5rem; color: var(--color-text-primary); }
+  p, li { font-size: 14px; line-height: 1.7; color: var(--color-text-secondary); }
+  .tag { display: inline-block; font-size: 12px; font-weight: 500; padding: 2px 8px; border-radius: 99px; margin-right: 6px; }
+  .tag-op  { background: #EEEDFE; color: #3C3489; }
+  .tag-val { background: #E1F5EE; color: #085041; }
+  .tag-mod { background: #FAEEDA; color: #633806; }
+  .tag-sep { background: #FAECE7; color: #4A1B0C; }
+  .tag-new { background: #FEF3C7; color: #92400E; font-size: 10px; padding: 1px 6px; vertical-align: middle; }
+  @media (prefers-color-scheme: dark) {
+    .tag-op  { background: #3C3489; color: #CECBF6; }
+    .tag-val { background: #085041; color: #9FE1CB; }
+    .tag-mod { background: #633806; color: #FAC775; }
+    .tag-sep { background: #4A1B0C; color: #F5C4B3; }
+    .tag-new { background: #78350F; color: #FDE68A; }
+  }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 0.5rem; }
+  th { text-align: left; font-weight: 500; font-size: 12px; color: var(--color-text-secondary); padding: 6px 8px; border-bottom: 1px solid var(--color-border-tertiary); }
+  td { padding: 5px 8px; color: var(--color-text-secondary); border-bottom: 1px solid var(--color-border-tertiary); font-family: var(--font-mono); font-size: 12px; vertical-align: top; }
+  td.w { font-family: var(--font-sans); }
+  tr:last-child td { border-bottom: none; }
+  .card { border: 1px solid var(--color-border-tertiary); border-radius: 10px; padding: 1rem 1.25rem; margin: 0.75rem 0; background: var(--color-background-secondary); }
+  .example { font-family: var(--font-mono); font-size: 13px; background: var(--color-background-tertiary); padding: 10px 14px; border-radius: 8px; margin: 0.5rem 0; color: var(--color-text-primary); line-height: 1.8; white-space: pre-wrap; }
+  .rule { display: flex; gap: 10px; margin: 0.4rem 0; font-size: 13px; }
+  .rule-num { font-weight: 500; min-width: 18px; color: var(--color-text-primary); }
+  .divider { border: none; border-top: 1px solid var(--color-border-tertiary); margin: 1.25rem 0; }
+  .change-note { font-size: 12px; color: var(--color-text-secondary); font-style: italic; margin: 0.25rem 0 0; }
+  .diff-add { color: #085041; }
+  .diff-rem { color: #9B1C1C; text-decoration: line-through; opacity: 0.6; }
+  @media (prefers-color-scheme: dark) {
+    .diff-add { color: #9FE1CB; }
+    .diff-rem { color: #FCA5A5; }
+  }
+</style>
+</head>
+<body>
+<div class="spec">
+  <h2>Cifra do Centro — especificação v1.1</h2>
+  <p>Uma linguagem cifrada em português coloquial onde sequências de palavras genéricas codificam valores ASCII via expressões aritméticas.</p>
+
+  <hr class="divider">
+  <h3>Tipos de token <span style="font-weight:400;color:var(--color-text-secondary);font-size:13px">— cada palavra tem um papel</span></h3>
+
+  <div style="display:flex;flex-wrap:wrap;gap:8px;margin:0.5rem 0 1rem;">
+    <span><span class="tag tag-val">valor</span><span style="font-size:13px">número fixo na tabela</span></span>
+    <span><span class="tag tag-op">operador</span><span style="font-size:13px">conectivo aritmético</span></span>
+    <span><span class="tag tag-mod">modificador</span><span style="font-size:13px">escala o valor</span></span>
+    <span><span class="tag tag-sep">separador</span><span style="font-size:13px">delimita caracteres</span></span>
+  </div>
+
+  <hr class="divider">
+  <h3>Tabela de palavras-raiz</h3>
+
+  <table>
+    <tr><th>Palavra</th><th>Tipo</th><th>Valor / Efeito</th><th>Motivo mnemônico</th></tr>
+    <tr><td class="w">coisinha</td><td><span class="tag tag-val">valor</span></td><td>1</td><td class="w">diminutivo de coisa — mínimo <span class="tag tag-new">novo v1.1</span></td></tr>
+    <tr><td class="w">coisa</td><td><span class="tag tag-val">valor</span></td><td>2</td><td class="w">neutro, genérico — base par</td></tr>
+    <tr><td class="w">coiso</td><td><span class="tag tag-val">valor</span></td><td>3</td><td class="w">variante masc. — base ímpar</td></tr>
+    <tr><td class="w">trem</td><td><span class="tag tag-val">valor</span></td><td>5</td><td class="w">coisa grossa, pesada — 5</td></tr>
+    <tr><td class="w">negócio</td><td><span class="tag tag-val">valor</span></td><td>7</td><td class="w">importante, primo</td></tr>
+    <tr><td class="w">bagulho</td><td><span class="tag tag-val">valor</span></td><td>11</td><td class="w">bagulho é especial — primo</td></tr>
+    <tr><td class="w">troço</td><td><span class="tag tag-val">valor</span></td><td>13</td><td class="w">troço misterioso — primo</td></tr>
+    <tr><td class="w">parada</td><td><span class="tag tag-val">valor</span></td><td>16</td><td class="w">parada é grande — potência de 2</td></tr>
+    <tr><td class="w">birosca</td><td><span class="tag tag-val">valor</span></td><td>32</td><td class="w">espaço ASCII (32) — começa tudo</td></tr>
+    <tr><td class="w">zica</td><td><span class="tag tag-val">valor</span></td><td>64</td><td class="w">o zica — 64, potência de 2</td></tr>
+    <tr><td class="w">fulero</td><td><span class="tag tag-val">valor</span></td><td>-1</td><td class="w">subtrai 1 — é ruim</td></tr>
+  </table>
+
+  <h3 style="margin-top:1.25rem">Modificadores de escala</h3>
+  <table>
+    <tr><th>Palavra</th><th>Tipo</th><th>Efeito</th></tr>
+    <tr><td class="w">meio</td><td><span class="tag tag-mod">modificador</span></td><td>próximo valor ÷ 2 (arredonda p/ baixo)</td></tr>
+    <tr><td class="w">dobro</td><td><span class="tag tag-mod">modificador</span></td><td>próximo valor × 2</td></tr>
+    <tr><td class="w">triplo</td><td><span class="tag tag-mod">modificador</span></td><td>próximo valor × 3</td></tr>
+    <tr><td class="w">um monte</td><td><span class="tag tag-mod">modificador</span></td><td>próximo valor × 10</td></tr>
+  </table>
+
+  <h3 style="margin-top:1.25rem">Operadores (conectivos)</h3>
+  <table>
+    <tr><th>Palavra</th><th>Tipo</th><th>Operação</th><th>Precedência</th></tr>
+    <tr><td class="w">e</td><td><span class="tag tag-op">operador</span></td><td>+  adição</td><td>1 (baixa)</td></tr>
+    <tr><td class="w">a</td><td><span class="tag tag-op">operador</span></td><td>−  subtração</td><td>1 (baixa)</td></tr>
+    <tr><td class="w">o</td><td><span class="tag tag-op">operador</span></td><td>×  multiplicação</td><td>2 (alta)</td></tr>
+  </table>
+
+  <h3 style="margin-top:1.25rem">Separadores</h3>
+  <table>
+    <tr><th>Palavra / sequência</th><th>Função</th></tr>
+    <tr><td class="w">aí</td><td class="w">separa dois caracteres consecutivos</td></tr>
+    <tr><td class="w">daí</td><td class="w">caractere espaço (ASCII 32) — <strong>única</strong> forma de codificar espaço <span class="tag tag-new">corrigido v1.1</span></td></tr>
+    <tr><td class="w">vixe</td><td class="w">próximo caractere é maiúsculo <span class="tag tag-new">novo v1.1</span></td></tr>
+    <tr><td class="w">né</td><td class="w">fim de frase / fim do texto cifrado</td></tr>
+  </table>
+  <p class="change-note">⚠ <code>birosca</code> (32) nunca codifica espaço — use sempre <code>daí</code>. <code>birosca</code> só aparece em expressões aritméticas.</p>
+
+  <hr class="divider">
+  <h3>Regras de avaliação</h3>
+
+  <div class="rule"><span class="rule-num">1.</span><span>Uma expressão vai de um separador ao próximo. Avalie com precedência: <code>o</code> antes de <code>e</code> / <code>a</code>.</span></div>
+  <div class="rule"><span class="rule-num">2.</span><span>Modificadores (<code>dobro</code>, <code>meio</code>…) se aplicam apenas ao <strong>próximo token de valor</strong>, não à expressão inteira.</span></div>
+  <div class="rule"><span class="rule-num">3.</span><span>O resultado da expressão é o código ASCII do caractere (alvo prático: 33–126).</span></div>
+  <div class="rule"><span class="rule-num">4.</span><span><code>vixe</code> antecede o separador do caractere e marca que a letra resultante é maiúscula. Ex: <code>vixe zica e coisa aí …</code> → 'A'.</span></div>
+  <div class="rule"><span class="rule-num">5.</span><span>Sem <code>vixe</code>, todo caractere é minúsculo (ou símbolo, se não for letra).</span></div>
+  <div class="rule"><span class="rule-num">6.</span><span>Se o caractere resultante não for letra, <code>vixe</code> é silenciosamente ignorado — sem erro. Ex: <code>vixe birosca e coisinha</code> → '!' normalmente.</span></div>
+
+  <p style="font-size:12px;margin-top:0.75rem;color:var(--color-text-secondary)">
+    <strong style="color:var(--color-text-primary)">Nota sobre múltiplas codificações:</strong>
+    vários caminhos aritméticos podem produzir o mesmo ASCII — isso é intencional. Não há codificação canônica única; qualquer expressão válida que resulte no valor correto é aceita.
+  </p>
+
+  <hr class="divider">
+  <h3>Exemplos de codificação</h3>
+
+  <div class="card">
+    <p style="margin:0 0 4px;font-size:12px;color:var(--color-text-secondary)">Caractere: <strong style="color:var(--color-text-primary)">A</strong> — ASCII 65</p>
+    <div class="example">vixe zica e coisa aí
+= maiúsc( 64 + 2 ) = maiúsc(65) → 'A'</div>
+  </div>
+
+  <div class="card">
+    <p style="margin:0 0 4px;font-size:12px;color:var(--color-text-secondary)">Caractere: <strong style="color:var(--color-text-primary)">a</strong> — ASCII 97</p>
+    <div class="example">dobro birosca e coiso aí
+= (32×2) + 3 = 64 + 33 = 97 → 'a'</div>
+  </div>
+
+  <div class="card">
+    <p style="margin:0 0 4px;font-size:12px;color:var(--color-text-secondary)">Caractere: <strong style="color:var(--color-text-primary)">!</strong> — ASCII 33</p>
+    <div class="example">birosca e coisinha aí
+= 32 + 1 = 33 → '!'</div>
+  </div>
+
+  <div class="card">
+    <p style="margin:0 0 4px;font-size:12px;color:var(--color-text-secondary)">Frase: <strong style="color:var(--color-text-primary)">"Oi!"</strong></p>
+    <div class="example">vixe dobro birosca e dobro negócio e coiso aí   ← 'O' (111, maiúsc)
+dobro birosca e coisa o bagulho a coiso aí          ← 'i' (105)
+birosca e coisinha né                               ← '!' (33)</div>
+  </div>
+
+  <hr class="divider">
+  <h3>Resumo rápido (referência)</h3>
+  <div class="example">── valores ──────────────────────────────────
+coisinha=1  coisa=2   coiso=3   trem=5
+negócio=7   bagulho=11  troço=13  parada=16
+birosca=32  zica=64   fulero=−1
+
+── modificadores ────────────────────────────
+meio=÷2  dobro=×2  triplo=×3  um monte=×10
+
+── operadores ───────────────────────────────
+e=+  a=−  o=×   (prec: o > e/a)
+
+── separadores ──────────────────────────────
+aí   → próximo char
+daí  → espaço (único encoding de espaço)
+vixe → próxima letra é maiúscula
+né   → fim do texto</div>
+
+  <hr class="divider">
+  <p class="change-note" style="margin-top:0">
+    <strong>Mudanças v1.0 → v1.1:</strong>
+    adicionado <code>coisinha=1</code>;
+    <code>daí</code> é o único encoding de espaço (<code>birosca</code> reservado para aritmética);
+    adicionado <code>vixe</code> para maiúsculas;
+    <code>vixe</code> antes de não-letra é silenciosamente ignorado (regra 6);
+    removida regra ambígua de encadeamento para ASCII&nbsp;&gt;&nbsp;127 (fora do escopo prático);
+    faixa alvo documentada como ASCII 33–126.
+  </p>
+</div>
+</body>
+</html>

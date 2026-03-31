@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cifra do Centro</title>
+  <link rel="stylesheet" type="text/css" href="style.css">  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="logo-row">
+        <h1>Cifra do Centro</h1>
+        <span class="version">v1.1</span>
+      </div>
+      <p class="tagline">Uma linguagem cifrada em português coloquial.<br>Palavras genéricas codificam texto via aritmética ASCII.</p>
+    </header>
+
+    <div class="mode-switch">
+      <button class="mode-btn active" id="btn-encode" onclick="setMode('encode')">Codificar</button>
+      <button class="mode-btn"        id="btn-decode" onclick="setMode('decode')">Decodificar</button>
+    </div>
+
+    <div class="panel">
+      <div class="panel-label">
+        <span id="input-label">Texto original</span>
+        <span class="char-count" id="char-count">0 chars</span>
+      </div>
+      <textarea id="input" placeholder="Digite aqui..." oninput="onInput()" autocomplete="off" spellcheck="false"></textarea>
+    </div>
+
+    <button class="run-btn" id="run-btn" onclick="run()">
+      <div class="spinner"></div>
+      <span class="btn-label" id="btn-label">Codificar →</span>
+    </button>
+
+    <div class="panel">
+      <div class="panel-label">
+        <span id="output-label">Cifra do Centro</span>
+      </div>
+      <div class="output-area empty" id="output">O resultado vai aparecer aqui...</div>
+      <div class="copy-row">
+        <button class="copy-btn" id="copy-btn" onclick="copyOutput()">copiar</button>
+      </div>
+    </div>
+
+    <details>
+      <summary>Referência rápida</summary>
+      <div class="ref-body">
+        <div class="ref-section">Valores</div>
+        <div class="ref-grid">
+          <div class="ref-item"><span class="ref-word">coisinha</span><span class="ref-val">1</span></div>
+          <div class="ref-item"><span class="ref-word">coisa</span><span class="ref-val">2</span></div>
+          <div class="ref-item"><span class="ref-word">coiso</span><span class="ref-val">3</span></div>
+          <div class="ref-item"><span class="ref-word">trem</span><span class="ref-val">5</span></div>
+          <div class="ref-item"><span class="ref-word">negócio</span><span class="ref-val">7</span></div>
+          <div class="ref-item"><span class="ref-word">bagulho</span><span class="ref-val">11</span></div>
+          <div class="ref-item"><span class="ref-word">troço</span><span class="ref-val">13</span></div>
+          <div class="ref-item"><span class="ref-word">parada</span><span class="ref-val">16</span></div>
+          <div class="ref-item"><span class="ref-word">birosca</span><span class="ref-val">32</span></div>
+          <div class="ref-item"><span class="ref-word">zica</span><span class="ref-val">64</span></div>
+          <div class="ref-item"><span class="ref-word">fulero</span><span class="ref-val">−1</span></div>
+        </div>
+        <div class="ref-section">Modificadores</div>
+        <div class="ref-inline">
+          <span class="ref-tag">meio = ÷2</span>
+          <span class="ref-tag">dobro = ×2</span>
+          <span class="ref-tag">triplo = ×3</span>
+          <span class="ref-tag">um monte = ×10</span>
+        </div>
+        <div class="ref-section" style="margin-top:10px">Operadores</div>
+        <div class="ref-inline">
+          <span class="ref-tag">e = +  (prec 1)</span>
+          <span class="ref-tag">a = −  (prec 1)</span>
+          <span class="ref-tag">o = ×  (prec 2)</span>
+        </div>
+        <div class="ref-section" style="margin-top:10px">Separadores</div>
+        <div class="ref-inline">
+          <span class="ref-tag">aí → próx. char</span>
+          <span class="ref-tag">daí → espaço</span>
+          <span class="ref-tag">vixe → maiúscula</span>
+          <span class="ref-tag">né → fim</span>
+        </div>
+      </div>
+    </details>
+
+    <footer>
+      Cifra do Centro — spec v1.1 &nbsp;·&nbsp; encode/decode via Python
+    </footer>
+  </div>
+
+  <script>
+  // Estado
+  let mode = 'encode';
+
+  // Modo
+  function setMode(m) {
+    mode = m;
+    document.getElementById('btn-encode').classList.toggle('active', m === 'encode');
+    document.getElementById('btn-decode').classList.toggle('active', m === 'decode');
+    document.getElementById('input-label').textContent  = m === 'encode' ? 'Texto original'    : 'Cifra do Centro';
+    document.getElementById('output-label').textContent = m === 'encode' ? 'Cifra do Centro'    : 'Texto decodificado';
+    document.getElementById('btn-label').textContent    = m === 'encode' ? 'Codificar →'       : 'Decodificar →';
+    document.getElementById('input').placeholder        = m === 'encode'
+      ? 'Digite o texto a codificar...'
+      : 'Cole a cifra aqui (ex: vixe zica e coisa aí ...)';
+    clearOutput();
+  }
+
+  function onInput() {
+    const val = document.getElementById('input').value;
+    document.getElementById('char-count').textContent = `${val.length} chars`;
+  }
+
+  function clearOutput() {
+    const el = document.getElementById('output');
+    el.textContent = 'O resultado vai aparecer aqui...';
+    el.className = 'output-area empty';
+  }
+
+  // API
+  async function run() {
+    const input = document.getElementById('input').value.trim();
+    if (!input) { clearOutput(); return; }
+
+    const btn = document.getElementById('run-btn');
+    const out = document.getElementById('output');
+
+    // Loading state
+    btn.disabled = true;
+    btn.classList.add('loading');
+    out.textContent = '';
+    out.className = 'output-area empty';
+
+    try {
+      const endpoint = mode === 'encode' ? '/encode' : '/decode';
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: input }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        const msg = data.detail ?? `Erro HTTP ${res.status}`;
+        out.textContent = `Erro: ${msg}`;
+        out.className = 'output-area error';
+      } else {
+        out.textContent = data.result;
+        out.className = 'output-area';
+      }
+    } catch (err) {
+      out.textContent = `Erro de conexão: ${err.message}`;
+      out.className = 'output-area error';
+    } finally {
+      btn.disabled = false;
+      btn.classList.remove('loading');
+    }
+  }
+
+  // Enter
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey && document.activeElement.id === 'input') {
+      e.preventDefault(); run();
+    }
+  });
+
+  // Copiar
+  async function copyOutput() {
+    const el = document.getElementById('output');
+    if (el.classList.contains('empty') || el.classList.contains('error')) return;
+    await navigator.clipboard.writeText(el.textContent).catch(() => {});
+    const btn = document.getElementById('copy-btn');
+    btn.textContent = 'copiado!'; btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'copiar'; btn.classList.remove('copied'); }, 1500);
+  }
+  </script>
+</body>
+</html>
